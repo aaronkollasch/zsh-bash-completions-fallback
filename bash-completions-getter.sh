@@ -58,10 +58,16 @@ source_bash_completion() {
 }
 
 parse_quoted_arguments() {
+    if command -v python &>/dev/null; then
+        UNQUOTED_ARGS=()
+        readarray -d '' UNQUOTED_ARGS < <(python -c 'import sys,shlex;print("\0".join(shlex.split(sys.argv[1])),end="")' "$1")
+        return
+    fi
     local args="${1#\'}"
     args="${args%\'}"
     local QUOTED_ARGS=()
-    quote="${2:-\"}"
+    local quote="${2:-\"}"
+    local i=0
 
     if [[ "${args:$i}" == *"${quote}"* ]]; then
         new_args="${args}"
@@ -284,7 +290,7 @@ get_completions() {
             unset -f compopt
             echo "${_COMP_OPTIONS[@]}"
             echo "${COMPLETE_ACTIONS[@]}"
-            printf "%s\n" "${COMPLETE_WORDS[@]}"
+            printf "%q\n" "${COMPLETE_WORDS[@]}"
             return 0
         fi
 
@@ -336,7 +342,7 @@ get_completions() {
     # print options, followed by completions to stdout
     echo "${_COMP_OPTIONS[@]}"
     echo "${COMPLETE_ACTIONS[@]}"
-    printf "%s\n" "${COMPREPLY[@]}"
+    printf "%q\n" "${COMPREPLY[@]}"
 }
 
 get_defined_completions() {
